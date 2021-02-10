@@ -8,6 +8,9 @@
 
 /* Begin PBXBuildFile section */
 		D4A6F37125D3822400E3AFDD /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4A6F37025D3822400E3AFDD /* main.swift */; };
+		D4A6F38225D3827600E3AFDD /* Swiftnet.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4A6F37F25D3827600E3AFDD /* Swiftnet.swift */; };
+		D4A6F38325D3827600E3AFDD /* SwiftnetFilter.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4A6F38025D3827600E3AFDD /* SwiftnetFilter.swift */; };
+		D4A6F38425D3827600E3AFDD /* SwiftnetLayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4A6F38125D3827600E3AFDD /* SwiftnetLayer.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -25,6 +28,13 @@
 /* Begin PBXFileReference section */
 		D4A6F36D25D3822400E3AFDD /* Swiftnet */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = Swiftnet; sourceTree = BUILT_PRODUCTS_DIR; };
 		D4A6F37025D3822400E3AFDD /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
+		D4A6F37B25D3824C00E3AFDD /* .gitignore */ = {isa = PBXFileReference; lastKnownFileType = text; path = .gitignore; sourceTree = "<group>"; };
+		D4A6F37C25D3824C00E3AFDD /* .swiftlint.yml */ = {isa = PBXFileReference; lastKnownFileType = text.yaml; path = .swiftlint.yml; sourceTree = "<group>"; };
+		D4A6F37D25D3824C00E3AFDD /* .overcommit.yml */ = {isa = PBXFileReference; lastKnownFileType = text.yaml; path = .overcommit.yml; sourceTree = "<group>"; };
+		D4A6F37E25D3824C00E3AFDD /* swiftlint.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = swiftlint.sh; sourceTree = "<group>"; };
+		D4A6F37F25D3827600E3AFDD /* Swiftnet.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Swiftnet.swift; sourceTree = "<group>"; };
+		D4A6F38025D3827600E3AFDD /* SwiftnetFilter.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SwiftnetFilter.swift; sourceTree = "<group>"; };
+		D4A6F38125D3827600E3AFDD /* SwiftnetLayer.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SwiftnetLayer.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -41,6 +51,10 @@
 		D4A6F36425D3822400E3AFDD = {
 			isa = PBXGroup;
 			children = (
+				D4A6F37B25D3824C00E3AFDD /* .gitignore */,
+				D4A6F37D25D3824C00E3AFDD /* .overcommit.yml */,
+				D4A6F37C25D3824C00E3AFDD /* .swiftlint.yml */,
+				D4A6F37E25D3824C00E3AFDD /* swiftlint.sh */,
 				D4A6F36F25D3822400E3AFDD /* Swiftnet */,
 				D4A6F36E25D3822400E3AFDD /* Products */,
 			);
@@ -58,6 +72,9 @@
 			isa = PBXGroup;
 			children = (
 				D4A6F37025D3822400E3AFDD /* main.swift */,
+				D4A6F37F25D3827600E3AFDD /* Swiftnet.swift */,
+				D4A6F38025D3827600E3AFDD /* SwiftnetFilter.swift */,
+				D4A6F38125D3827600E3AFDD /* SwiftnetLayer.swift */,
 			);
 			path = Swiftnet;
 			sourceTree = "<group>";
@@ -120,6 +137,9 @@
 			buildActionMask = 2147483647;
 			files = (
 				D4A6F37125D3822400E3AFDD /* main.swift in Sources */,
+				D4A6F38425D3827600E3AFDD /* SwiftnetLayer.swift in Sources */,
+				D4A6F38325D3827600E3AFDD /* SwiftnetFilter.swift in Sources */,
+				D4A6F38225D3827600E3AFDD /* Swiftnet.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
