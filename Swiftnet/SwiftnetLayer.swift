@@ -10,7 +10,7 @@ class SwiftnetLayer {
     enum LayerType { case fullyConnected, pooling }
     let layerType: LayerType
 
-    let activation: BNNSActivation
+    let activation: BNNSActivationFunction
     let poolingFunction: BNNSPoolingFunction!
 
     let height: Int
@@ -25,7 +25,7 @@ class SwiftnetLayer {
     var outputBuffer: UnsafeMutableRawPointer!
 
     init(
-        activation: BNNSActivation, poolingFunction: BNNSPoolingFunction,
+        activation: BNNSActivationFunction, poolingFunction: BNNSPoolingFunction,
         kernelWidth: Int, height: Int
     ) {
         self.layerType = .pooling
@@ -40,7 +40,7 @@ class SwiftnetLayer {
         self.counts.cOutputs = height * width
     }
 
-    init(activation: BNNSActivation, cInputs: Int, cOutputs: Int) {
+    init(activation: BNNSActivationFunction, cInputs: Int, cOutputs: Int) {
         self.layerType = .fullyConnected
         self.activation = activation
         self.poolingFunction = nil
@@ -54,7 +54,9 @@ class SwiftnetLayer {
         self.counts.cWeights = cInputs * cOutputs
     }
 
-    func activate() { BNNSFilterApply(bnnsFilter, inputBuffer, outputBuffer) }
+    func activate() {
+        BNNSFilterApply(bnnsFilter, inputBuffer, outputBuffer)
+    }
 
     func makeFilter(
         _ pBiases: UnsafeMutableRawPointer,
@@ -65,22 +67,5 @@ class SwiftnetLayer {
         inputBuffer = pInputs
         outputBuffer = pOutputs
         bnnsFilter = SwiftnetFilter.makeFilter(self, pBiases, pInputs, pOutputs, pWeights)
-    }
-
-    static func getStackCounts(_ layers: [SwiftnetLayer]) -> Counts {
-        let totals = Counts()
-
-        layers.forEach { layer in
-            if layer === layers.first {
-                totals.cInputs = layer.counts.cInputs
-            } else {
-                totals.cOutputs += layer.counts.cOutputs
-            }
-
-            totals.cBiases += layer.counts.cBiases
-            totals.cWeights += layer.counts.cWeights
-        }
-
-        return totals
     }
 }

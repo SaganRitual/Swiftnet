@@ -92,7 +92,7 @@ enum SwiftnetFilter {
 
         var lp = BNNSLayerParametersFullyConnected(
             i_desc: inputs, w_desc: weights, o_desc: outputs,
-            bias: biases, activation: layer.activation
+            bias: biases, activation: BNNSActivation(function: layer.activation)
         )
 
         return BNNSFilterCreateLayerFullyConnected(&lp, &bnnsFilterParameters)!
@@ -123,7 +123,8 @@ enum SwiftnetFilter {
 
         var lp = BNNSLayerParametersPooling(
             i_desc: inputs, o_desc: outputs, bias: biases,
-            activation: layer.activation, pooling_function: layer.poolingFunction,
+            activation: BNNSActivation(function: layer.activation),
+            pooling_function: layer.poolingFunction,
             k_width: layer.width, k_height: layer.height,
             x_stride: 1, y_stride: 1,
             x_dilation_stride: 0, y_dilation_stride: 0,
