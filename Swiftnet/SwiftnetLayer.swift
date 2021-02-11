@@ -10,6 +10,7 @@ class SwiftnetLayer {
     let activation: BNNSActivationFunction
     let poolingFunction: BNNSPoolingFunction!
 
+    let cChannels: Int
     let height: Int
     let width: Int
 
@@ -27,12 +28,13 @@ class SwiftnetLayer {
 
     init(
         activation: BNNSActivationFunction, poolingFunction: BNNSPoolingFunction,
-        kernelWidth: Int, height: Int
+        kernelWidth: Int, height: Int, cChannels: Int
     ) {
         self.layerType = .pooling
         self.activation = activation
         self.poolingFunction = poolingFunction
 
+        self.cChannels = cChannels
         self.height = height
         self.width = kernelWidth
 
@@ -49,6 +51,7 @@ class SwiftnetLayer {
         self.activation = activation
         self.poolingFunction = nil
 
+        self.cChannels = 1
         self.height = 1
         self.width = cInputs * cOutputs
 
@@ -61,11 +64,7 @@ class SwiftnetLayer {
         }
     }
 
-    func activate() {
-        print("ain  at \(inputBuffer!) \(Swiftnet.toBuffer(from: inputBuffer, cElements: counts.cInputs).map { $0 })")
-        BNNSFilterApply(bnnsFilter, inputBuffer, outputBuffer)
-        print("aout at \(outputBuffer!) \(Swiftnet.toBuffer(from: outputBuffer, cElements: counts.cOutputs).map { $0 })")
-    }
+    func activate() { BNNSFilterApply(bnnsFilter, inputBuffer, outputBuffer) }
 
     func makeFilter(
         _ pBiases: UnsafeMutableRawPointer?,
@@ -76,12 +75,6 @@ class SwiftnetLayer {
         inputBuffer = pInputs
         outputBuffer = pOutputs
 
-        print(
-            "layer make filter"
-            + " pb \(String(describing: pBiases))"
-            + " pi \(pInputs) po \(pOutputs)"
-            + " pw \(String(describing: pWeights))"
-        )
         bnnsFilter = SwiftnetFilter.makeFilter(self, pBiases, pInputs, pOutputs, pWeights)
     }
 }

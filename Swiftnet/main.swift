@@ -18,7 +18,11 @@ let semaphore = DispatchSemaphore(value: 0)
 class Gremlin {
     var idNumber = 0
 
-    var inputLayer = SwiftnetLayer(activation: .identity, poolingFunction: .average, kernelWidth: 3, height: 3)
+    var inputLayer = SwiftnetLayer(
+        activation: .identity, poolingFunction: .average,
+        kernelWidth: 3, height: 3, cChannels: 2
+    )
+
     var hiddenLayers = [SwiftnetLayer(activation: .identity, cInputs: 9, cOutputs: 1)]
 
     var outputLayer = SwiftnetLayer(
@@ -36,8 +40,6 @@ class Gremlin {
         self.idNumber = idNumber
         let counts = Swiftnet.getStackCounts(allLayers)
 
-        print("cb = \(counts.cBiases), cpIO = \(counts.cInputs + counts.cOutputs), cpW = \(counts.cWeights)")
-
         self.pBiases = UnsafeMutableRawPointer.allocate(byteCount: bytes(counts.cBiases), alignment: MemoryLayout<Float>.alignment)
         self.pIO = UnsafeMutableRawPointer.allocate(byteCount: bytes(counts.cInputs + counts.cOutputs), alignment: MemoryLayout<Float>.alignment)
         self.pWeights = UnsafeMutableRawPointer.allocate(byteCount: bytes(counts.cWeights), alignment: MemoryLayout<Float>.alignment)
@@ -53,22 +55,17 @@ class Gremlin {
     }
 
     func activate() {
-        print("in for \(idNumber) \(net.inputBuffer.map { $0 })")
-
         net.activate { [self] in
-            print("out for \(idNumber) \(net.outputBuffer.map { $0 })")
-
             assert(net.outputBuffer.allSatisfy { !$0.isNaN && $0 != 0  })
             semaphore.signal()
         }
     }
 }
 
-let count = 100
+let count = 1
 
 for idNumber in 0..<count {
     netDispatch.async {
-        print("started \(idNumber)")
         let g = Gremlin(idNumber: idNumber)
         g.activate()
     }

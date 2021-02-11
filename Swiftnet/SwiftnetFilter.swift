@@ -126,7 +126,7 @@ enum SwiftnetFilter {
     ) -> BNNSFilter {
         let inputs = SwiftnetFilter.makeArrayDescriptor(
             layout: BNNSDataLayoutImageCHW,
-            size: (layer.width, layer.height, 1, 0, 0, 0, 0, 0)
+            size: (layer.width, layer.height, layer.cChannels, 0, 0, 0, 0, 0)
         )
 
         let outputs = SwiftnetFilter.makeArrayDescriptor(
@@ -145,7 +145,7 @@ enum SwiftnetFilter {
             activation: BNNSActivation(function: layer.activation),
             pooling_function: layer.poolingFunction,
             k_width: layer.width, k_height: layer.height,
-            x_stride: 1, y_stride: 1,
+            x_stride: 2, y_stride: 1,
             x_dilation_stride: 0, y_dilation_stride: 0,
             x_padding: layer.width / 2, y_padding: layer.height / 2,
             pad: (0, 0, 0, 0)

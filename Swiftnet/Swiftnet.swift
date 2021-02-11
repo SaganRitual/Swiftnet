@@ -86,8 +86,6 @@ class Swiftnet {
         self.outputBuffer = Swiftnet.toBuffer(
             from: pi, cElements: layers.last!.counts.cOutputs
         )
-
-        print("net init in \(self.inputBuffer) / \(self.inputBuffer.count) out \(self.outputBuffer) / \(self.outputBuffer.count)")
     }
 
     func activate(_ onComplete: @escaping () -> Void) {
@@ -102,7 +100,7 @@ class Swiftnet {
 
         layers.forEach { layer in
             if layer === layers.first {
-                totals.cInputs = layer.counts.cInputs
+                totals.cInputs = layer.counts.cInputs * layer.cChannels
             }
 
             totals.cOutputs += layer.counts.cOutputs
@@ -112,8 +110,6 @@ class Swiftnet {
                 totals.cWeights += layer.counts.cWeights
             }
         }
-
-        print("totals \(totals)")
 
         return totals
     }
