@@ -3,9 +3,6 @@
 import Accelerate
 import Foundation
 
-struct BufferSet {
-}
-
 class SwiftnetLayer {
     enum LayerType { case fullyConnected, pooling }
     let layerType: LayerType
@@ -16,7 +13,11 @@ class SwiftnetLayer {
     let height: Int
     let width: Int
 
-    class Counts { var cBiases = 0, cInputs = 0, cOutputs = 0, cWeights = 0 }
+    class Counts: CustomDebugStringConvertible {
+        var debugDescription: String { "cElements: \(cBiases), \(cInputs), \(cOutputs), \(cWeights)" }
+        var cBiases = 0, cInputs = 0, cOutputs = 0, cWeights = 0
+    }
+
     var counts = Counts()
 
     var bnnsFilter: BNNSFilter!
@@ -40,7 +41,10 @@ class SwiftnetLayer {
         self.counts.cOutputs = height * width
     }
 
-    init(activation: BNNSActivationFunction, cInputs: Int, cOutputs: Int) {
+    init(
+        activation: BNNSActivationFunction, cInputs: Int, cOutputs: Int,
+        calculateControls: Bool = true
+    ) {
         self.layerType = .fullyConnected
         self.activation = activation
         self.poolingFunction = nil
@@ -48,24 +52,36 @@ class SwiftnetLayer {
         self.height = 1
         self.width = cInputs * cOutputs
 
-        self.counts.cBiases = cOutputs
         self.counts.cInputs = cInputs
         self.counts.cOutputs = cOutputs
-        self.counts.cWeights = cInputs * cOutputs
+
+        if calculateControls {
+            self.counts.cBiases = cOutputs
+            self.counts.cWeights = cInputs * cOutputs
+        }
     }
 
     func activate() {
+        print("ain  at \(inputBuffer!) \(Swiftnet.toBuffer(from: inputBuffer, cElements: counts.cInputs).map { $0 })")
         BNNSFilterApply(bnnsFilter, inputBuffer, outputBuffer)
+        print("aout at \(outputBuffer!) \(Swiftnet.toBuffer(from: outputBuffer, cElements: counts.cOutputs).map { $0 })")
     }
 
     func makeFilter(
-        _ pBiases: UnsafeMutableRawPointer,
+        _ pBiases: UnsafeMutableRawPointer?,
         _ pInputs: UnsafeMutableRawPointer,
         _ pOutputs: UnsafeMutableRawPointer,
-        _ pWeights: UnsafeMutableRawPointer
+        _ pWeights: UnsafeMutableRawPointer?
     ) {
         inputBuffer = pInputs
         outputBuffer = pOutputs
+
+        print(
+            "layer make filter"
+            + " pb \(String(describing: pBiases))"
+            + " pi \(pInputs) po \(pOutputs)"
+            + " pw \(String(describing: pWeights))"
+        )
         bnnsFilter = SwiftnetFilter.makeFilter(self, pBiases, pInputs, pOutputs, pWeights)
     }
 }

@@ -14,10 +14,10 @@ func * (_ lhs: Octuple, _ rhs: Octuple) -> Octuple {
 enum SwiftnetFilter {
     static func makeFilter(
         _ layer: SwiftnetLayer,
-        _ pBiases: UnsafeMutableRawPointer,
+        _ pBiases: UnsafeMutableRawPointer?,
         _ pInputs: UnsafeMutableRawPointer,
         _ pOutputs: UnsafeMutableRawPointer,
-        _ pWeights: UnsafeMutableRawPointer
+        _ pWeights: UnsafeMutableRawPointer?
     ) -> BNNSFilter {
         switch layer.layerType {
         case .fullyConnected:
@@ -27,7 +27,7 @@ enum SwiftnetFilter {
 
         case .pooling:
             return SwiftnetFilter.makePoolingFilter(
-                layer, pBiases, pInputs, pOutputs, pWeights
+                layer, pBiases, pInputs, pOutputs
             )
         }
     }
@@ -58,12 +58,31 @@ enum SwiftnetFilter {
 
     static func makeFullyConnectedFilter(
         _ layer: SwiftnetLayer,
-        _ pBiases: UnsafeMutableRawPointer,
+        _ pBiases: UnsafeMutableRawPointer?,
         _ pInputs: UnsafeMutableRawPointer,
         _ pOutputs: UnsafeMutableRawPointer,
-        _ pWeights: UnsafeMutableRawPointer
+        _ pWeights: UnsafeMutableRawPointer?
     ) -> BNNSFilter {
-        let biases = SwiftnetFilter.makeArrayDescriptor(
+        assert(
+            layer.counts.cBiases > 0 || pBiases == nil,
+            "Zero biases this layer, but non-nil pointer to biases buffer"
+        )
+
+        assert(
+            layer.counts.cWeights > 0 || pWeights == nil,
+            "Zero weights this layer, but non-nil pointer to weights buffer"
+        )
+
+        assert(
+            layer.counts.cInputs > 0 && layer.counts.cOutputs > 0,
+            "cInputs \(layer.counts.cInputs) cOutputs \(layer.counts.cOutputs), not good"
+        )
+
+        let biases = layer.counts.cBiases == 0 ?
+
+            SwiftnetFilter.makeArrayDescriptor() :
+
+            SwiftnetFilter.makeArrayDescriptor(
             layout: BNNSDataLayoutVector,
             size: (layer.counts.cBiases, 1, 0, 0, 0, 0, 0, 0),
             data: pBiases
@@ -81,12 +100,13 @@ enum SwiftnetFilter {
             data: nil
         )
 
-        let weights = SwiftnetFilter.makeArrayDescriptor(
+        let weights = layer.counts.cWeights == 0 ?
+
+            SwiftnetFilter.makeArrayDescriptor() :
+
+            SwiftnetFilter.makeArrayDescriptor(
             layout: BNNSDataLayoutRowMajorMatrix,
-            size: (
-                layer.counts.cInputs, layer.counts.cOutputs,
-                0, 0, 0, 0, 0, 0
-            ),
+            size: (layer.counts.cInputs, layer.counts.cOutputs, 0, 0, 0, 0, 0, 0),
             data: pWeights
         )
 
@@ -100,10 +120,9 @@ enum SwiftnetFilter {
 
     static func makePoolingFilter(
         _ layer: SwiftnetLayer,
-        _ pBiases: UnsafeMutableRawPointer,
+        _ pBiases: UnsafeMutableRawPointer?,
         _ pInputs: UnsafeMutableRawPointer,
-        _ pOutputs: UnsafeMutableRawPointer,
-        _ pWeights: UnsafeMutableRawPointer
+        _ pOutputs: UnsafeMutableRawPointer
     ) -> BNNSFilter {
         let inputs = SwiftnetFilter.makeArrayDescriptor(
             layout: BNNSDataLayoutImageCHW,

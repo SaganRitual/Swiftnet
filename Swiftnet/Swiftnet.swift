@@ -5,10 +5,12 @@ import Foundation
 
 func bytes(_ elements: Int) -> Int { elements * MemoryLayout<Float>.size }
 
+let lastLayerIsEmpty = false
+
 class Swiftnet {
     static let netDispatch = DispatchQueue(
         label: "net.dispatch.rob",
-//        attributes: .concurrent,
+        attributes: [],
         target: DispatchQueue.global()
     )
 
@@ -24,9 +26,6 @@ class Swiftnet {
 
     let inputBuffer: UnsafeBufferPointer<Float>
     let outputBuffer: UnsafeBufferPointer<Float>
-
-    // All the other memory is owned by the creator of the net
-    deinit { pOutputs.deallocate() }
 
     static func toMutableBuffer(
         from p: UnsafeMutableRawPointer, cElements: Int
@@ -45,30 +44,37 @@ class Swiftnet {
     private init(
         counts: SwiftnetLayer.Counts, layers: [SwiftnetLayer],
         pBiases: UnsafeMutableRawPointer,
-        pInputs: UnsafeMutableRawPointer,
+        pIO: UnsafeMutableRawPointer,
         pWeights: UnsafeMutableRawPointer,
         callbackDispatch: DispatchQueue
     ) {
         self.pBiases = pBiases
-        self.pInputs = pInputs
+        self.pInputs = pIO
+        self.pOutputs = pIO + bytes(counts.cInputs)
         self.pWeights = pWeights
         self.counts = counts
         self.layers = layers
         self.callbackDispatch = callbackDispatch
 
-        self.pOutputs = UnsafeMutableRawPointer.allocate(
-            byteCount: bytes(counts.cInputs + counts.cOutputs),
-            alignment: MemoryLayout<Float>.alignment
-        )
-
         var pb = pBiases, pi = pInputs, po = pOutputs, pw = pWeights
 
         layers.forEach { layer in
-            layer.makeFilter(pb, pi, po, pw)
-            pb += bytes(layer.counts.cBiases)
+            if layer === layers.first {
+                layer.makeFilter(pb, pi, po, nil)
+
+                pb += bytes(layer.counts.cBiases)
+
+            } else if !lastLayerIsEmpty || layer !== layers.last {
+                layer.makeFilter(pb, pi, po, pw)
+
+                pb += bytes(layer.counts.cBiases)
+                pw += bytes(layer.counts.cWeights)
+            } else {
+                layer.makeFilter(nil, pi, po, nil)
+            }
+
             pi = po
             po += bytes(layer.counts.cOutputs)
-            pw += bytes(layer.counts.cWeights)
         }
 
         self.inputBuffer = Swiftnet.toBuffer(
@@ -80,12 +86,14 @@ class Swiftnet {
         self.outputBuffer = Swiftnet.toBuffer(
             from: pi, cElements: layers.last!.counts.cOutputs
         )
+
+        print("net init in \(self.inputBuffer) / \(self.inputBuffer.count) out \(self.outputBuffer) / \(self.outputBuffer.count)")
     }
 
     func activate(_ onComplete: @escaping () -> Void) {
         Swiftnet.netDispatch.async { [self] in
             layers.forEach { $0.activate() }
-            onComplete()
+            callbackDispatch.async(execute: onComplete)
         }
     }
 
@@ -95,13 +103,17 @@ class Swiftnet {
         layers.forEach { layer in
             if layer === layers.first {
                 totals.cInputs = layer.counts.cInputs
-            } else {
-                totals.cOutputs += layer.counts.cOutputs
             }
 
-            totals.cBiases += layer.counts.cBiases
-            totals.cWeights += layer.counts.cWeights
+            totals.cOutputs += layer.counts.cOutputs
+
+            if !lastLayerIsEmpty || layer !== layers.last {
+                totals.cBiases += layer.counts.cBiases
+                totals.cWeights += layer.counts.cWeights
+            }
         }
+
+        print("totals \(totals)")
 
         return totals
     }
@@ -109,7 +121,7 @@ class Swiftnet {
     static func makeNet(
         layers: [SwiftnetLayer],
         pBiases: UnsafeMutableRawPointer,
-        pInputs: UnsafeMutableRawPointer,
+        pIO: UnsafeMutableRawPointer,
         pWeights: UnsafeMutableRawPointer,
         callbackDispatch: DispatchQueue = DispatchQueue.main
     ) -> Swiftnet {
@@ -117,8 +129,7 @@ class Swiftnet {
 
         return Swiftnet(
             counts: counts, layers: layers, pBiases: pBiases,
-            pInputs: pInputs, pWeights: pWeights,
-            callbackDispatch: callbackDispatch
+            pIO: pIO, pWeights: pWeights, callbackDispatch: callbackDispatch
         )
     }
 }
