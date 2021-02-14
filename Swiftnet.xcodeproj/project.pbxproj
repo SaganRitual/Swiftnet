@@ -11,6 +11,7 @@
 		D4A6F38225D3827600E3AFDD /* Swiftnet.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4A6F37F25D3827600E3AFDD /* Swiftnet.swift */; };
 		D4A6F38325D3827600E3AFDD /* SwiftnetFilter.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4A6F38025D3827600E3AFDD /* SwiftnetFilter.swift */; };
 		D4A6F38425D3827600E3AFDD /* SwiftnetLayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4A6F38125D3827600E3AFDD /* SwiftnetLayer.swift */; };
+		D4DB393C25D5CD980050E0DC /* SwiftPointer.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4DB393B25D5CD980050E0DC /* SwiftPointer.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -35,6 +36,7 @@
 		D4A6F37F25D3827600E3AFDD /* Swiftnet.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Swiftnet.swift; sourceTree = "<group>"; };
 		D4A6F38025D3827600E3AFDD /* SwiftnetFilter.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SwiftnetFilter.swift; sourceTree = "<group>"; };
 		D4A6F38125D3827600E3AFDD /* SwiftnetLayer.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SwiftnetLayer.swift; sourceTree = "<group>"; };
+		D4DB393B25D5CD980050E0DC /* SwiftPointer.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SwiftPointer.swift; path = ../../Tools/SwiftPointer.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -71,6 +73,7 @@
 		D4A6F36F25D3822400E3AFDD /* Swiftnet */ = {
 			isa = PBXGroup;
 			children = (
+				D4DB393B25D5CD980050E0DC /* SwiftPointer.swift */,
 				D4A6F37025D3822400E3AFDD /* main.swift */,
 				D4A6F37F25D3827600E3AFDD /* Swiftnet.swift */,
 				D4A6F38025D3827600E3AFDD /* SwiftnetFilter.swift */,
@@ -136,6 +139,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				D4DB393C25D5CD980050E0DC /* SwiftPointer.swift in Sources */,
 				D4A6F37125D3822400E3AFDD /* main.swift in Sources */,
 				D4A6F38425D3827600E3AFDD /* SwiftnetLayer.swift in Sources */,
 				D4A6F38325D3827600E3AFDD /* SwiftnetFilter.swift in Sources */,

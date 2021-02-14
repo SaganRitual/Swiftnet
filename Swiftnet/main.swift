@@ -14,19 +14,35 @@ let callbackDispatch = DispatchQueue(
 )
 
 let semaphore = DispatchSemaphore(value: 0)
+let semaphore2 = DispatchSemaphore(value: 0)
+
+class Barf {
+    var r0: SwiftPointer<Float>?
+    var r1: UnsafePointer<Float>?
+    var r2: UnsafeMutablePointer<Float>?
+
+    init() {
+        r0 = SwiftPointer(Float.self, bytes: 100)
+        r1 = r0!.asImmutable()
+        r2 = r0!.asMutable()
+    }
+}
+
+var barf: Barf? = Barf()
+barf = nil
 
 class Gremlin {
     var idNumber = 0
 
     var inputLayer = SwiftnetLayer(
-        activation: .identity, poolingFunction: .average,
-        kernelWidth: 3, height: 3, cChannels: 2
+        activation: .identity, poolingFunction: .max,
+        kernelWidth: 3, height: 3, cChannels: 1
     )
 
-    var hiddenLayers = [SwiftnetLayer(activation: .identity, cInputs: 9, cOutputs: 1)]
+    var hiddenLayers = [SwiftnetLayer(activation: .identity, cInputs: 9, cOutputs: 9, cChannels: 1)]
 
     var outputLayer = SwiftnetLayer(
-        activation: .identity, cInputs: 9, cOutputs: 1, calculateControls: !lastLayerIsEmpty
+        activation: .identity, cInputs: 9, cOutputs: 9, cChannels: 1, calculateControls: !lastLayerIsEmpty
     )
 
     var allLayers: [SwiftnetLayer] { [inputLayer] + hiddenLayers }// + [outputLayer] }
@@ -47,28 +63,53 @@ class Gremlin {
         pBiases.initializeMemory(as: Float.self, repeating: 0, count: counts.cBiases)
         pWeights.initializeMemory(as: Float.self, repeating: 1, count: counts.cWeights)
 
-        Swiftnet.toMutableBuffer(from: pIO, cElements: counts.cInputs).initialize(repeating: Float(idNumber + 1))
+        SwiftPointer<Float>.toMutableBuffer(from: pIO, cElements: counts.cInputs).initialize(repeating: Float(idNumber + 1))
 
-        self.net = Swiftnet.makeNet(
-            layers: allLayers, pBiases: pBiases, pIO: pIO, pWeights: pWeights, callbackDispatch: callbackDispatch
+        self.net = Swiftnet(
+            counts: counts, layers: allLayers,
+            pBiases: pBiases, pIO: pIO, pWeights: pWeights
         )
-    }
-
-    func activate() {
-        net.activate { [self] in
-            assert(net.outputBuffer.allSatisfy { !$0.isNaN && $0 != 0  })
-            semaphore.signal()
-        }
     }
 }
 
 let count = 1
 
-for idNumber in 0..<count {
-    netDispatch.async {
-        let g = Gremlin(idNumber: idNumber)
-        g.activate()
+func expand(_ number: Int) -> [Float] {
+    var n = number
+    var f = [Float](repeating: 0, count: 9)
+
+    for i in 0..<9 {
+        if ((n & 1) != 0) { f[i] = 1 }
+        n >>= 1
+    }
+
+    return f
+}
+
+func testInputs(_ net: Swiftnet) {
+    for i in 0..<Int(pow(2.0, 9.0)) {
+        print(expand(i))
     }
 }
 
-for _ in 0..<count { semaphore.wait() }
+for idNumber in 0..<count {
+    netDispatch.async {
+        let g = Gremlin(idNumber: idNumber)
+
+        let h = UnsafeMutableBufferPointer(mutating: g.net.inputBuffer)
+
+        let ii = g.net.pInputs.assumingMemoryBound(to: Float.self)
+        let i = UnsafeMutableBufferPointer<Float>(start: ii + 9, count: 9)
+
+        for ix in 0..<Int(pow(2.0, 9.0)) {
+            let f = expand(ix)
+            h.indices.forEach { h[$0] = f[$0] }
+            g.net.activate()
+            print("in \(f.reversed().map { $0 }) -> mid \(i.map { $0 }) -> out \(g.net.outputBuffer.map { $0 })")
+        }
+
+        semaphore2.signal()
+    }
+}
+
+for _ in 0..<count { semaphore2.wait() }

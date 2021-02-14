@@ -8,14 +8,6 @@ func bytes(_ elements: Int) -> Int { elements * MemoryLayout<Float>.size }
 let lastLayerIsEmpty = false
 
 class Swiftnet {
-    static let netDispatch = DispatchQueue(
-        label: "net.dispatch.rob",
-        attributes: [],
-        target: DispatchQueue.global()
-    )
-
-    let callbackDispatch: DispatchQueue
-
     let pBiases: UnsafeMutableRawPointer
     let pInputs: UnsafeMutableRawPointer
     let pOutputs: UnsafeMutableRawPointer
@@ -27,26 +19,12 @@ class Swiftnet {
     let inputBuffer: UnsafeBufferPointer<Float>
     let outputBuffer: UnsafeBufferPointer<Float>
 
-    static func toMutableBuffer(
-        from p: UnsafeMutableRawPointer, cElements: Int
-    ) -> UnsafeMutableBufferPointer<Float> {
-        let t = p.bindMemory(to: Float.self, capacity: cElements)
-        return UnsafeMutableBufferPointer(start: t, count: cElements)
-    }
-
-    static func toBuffer(
-        from p: UnsafeMutableRawPointer, cElements: Int
-    ) -> UnsafeBufferPointer<Float> {
-        let t = p.bindMemory(to: Float.self, capacity: cElements)
-        return UnsafeBufferPointer(start: t, count: cElements)
-    }
-
-    private init(
-        counts: SwiftnetLayer.Counts, layers: [SwiftnetLayer],
+    init(
+        counts: SwiftnetLayer.Counts,
+        layers: [SwiftnetLayer],
         pBiases: UnsafeMutableRawPointer,
         pIO: UnsafeMutableRawPointer,
-        pWeights: UnsafeMutableRawPointer,
-        callbackDispatch: DispatchQueue
+        pWeights: UnsafeMutableRawPointer
     ) {
         self.pBiases = pBiases
         self.pInputs = pIO
@@ -54,7 +32,6 @@ class Swiftnet {
         self.pWeights = pWeights
         self.counts = counts
         self.layers = layers
-        self.callbackDispatch = callbackDispatch
 
         var pb = pBiases, pi = pInputs, po = pOutputs, pw = pWeights
 
@@ -77,23 +54,20 @@ class Swiftnet {
             po += bytes(layer.counts.cOutputs)
         }
 
-        self.inputBuffer = Swiftnet.toBuffer(
-            from: pInputs, cElements: layers.first!.counts.cInputs
+        self.inputBuffer = SwiftPointer.bufferFrom(
+            pInputs, elementCount: layers.first!.counts.cInputs
         )
 
         // On the last pass through the loop, pi updates to point to
         // po, which is exactly the thing we want: the last output buffer
-        self.outputBuffer = Swiftnet.toBuffer(
-            from: pi, cElements: layers.last!.counts.cOutputs
+        self.outputBuffer = SwiftPointer.bufferFrom(
+            pi, elementCount: layers.last!.counts.cOutputs
         )
     }
 
-    func activate(_ onComplete: @escaping () -> Void) {
-        Swiftnet.netDispatch.async { [self] in
-            layers.forEach { $0.activate() }
-            callbackDispatch.async(execute: onComplete)
-        }
-    }
+    func activate() { layers.forEach { $0.activate() } }
+
+    static var stackCountsShown = false
 
     static func getStackCounts(_ layers: [SwiftnetLayer]) -> SwiftnetLayer.Counts {
         let totals = SwiftnetLayer.Counts()
@@ -111,21 +85,17 @@ class Swiftnet {
             }
         }
 
+        if !stackCountsShown {
+            print("Rings \(Int(sqrt(Double(totals.cInputs)) - 1) / 2)"
+                    + " kernel \(layers.first!.width)"
+                    + " x \(layers.first!.height)"
+                    + " x \(layers.first!.cChannels)"
+            )
+
+            print(totals.debugDescription)
+            stackCountsShown = true
+        }
+
         return totals
-    }
-
-    static func makeNet(
-        layers: [SwiftnetLayer],
-        pBiases: UnsafeMutableRawPointer,
-        pIO: UnsafeMutableRawPointer,
-        pWeights: UnsafeMutableRawPointer,
-        callbackDispatch: DispatchQueue = DispatchQueue.main
-    ) -> Swiftnet {
-        let counts = getStackCounts(layers)
-
-        return Swiftnet(
-            counts: counts, layers: layers, pBiases: pBiases,
-            pIO: pIO, pWeights: pWeights, callbackDispatch: callbackDispatch
-        )
     }
 }

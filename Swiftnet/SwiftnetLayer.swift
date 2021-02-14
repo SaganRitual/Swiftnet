@@ -15,8 +15,18 @@ class SwiftnetLayer {
     let width: Int
 
     class Counts: CustomDebugStringConvertible {
-        var debugDescription: String { "cElements: \(cBiases), \(cInputs), \(cOutputs), \(cWeights)" }
+        var debugDescription: String {
+            "Element counts: bias \(cBiases)"
+            + ", inputs \(cInputs)"
+            + ", outputs \(cOutputs)"
+            + ", weights \(cWeights)"
+            + ", total \(totalElements)"
+            + ", total bytes \(totalElements * MemoryLayout<Float>.size)"
+        }
+
         var cBiases = 0, cInputs = 0, cOutputs = 0, cWeights = 0
+
+        var totalElements: Int { cBiases + cInputs + cOutputs + cWeights }
     }
 
     var counts = Counts()
@@ -43,15 +53,18 @@ class SwiftnetLayer {
         self.counts.cOutputs = height * width
     }
 
+    deinit { BNNSFilterDestroy(bnnsFilter) }
+
     init(
-        activation: BNNSActivationFunction, cInputs: Int, cOutputs: Int,
+        activation: BNNSActivationFunction,
+        cInputs: Int, cOutputs: Int, cChannels: Int,
         calculateControls: Bool = true
     ) {
         self.layerType = .fullyConnected
         self.activation = activation
         self.poolingFunction = nil
 
-        self.cChannels = 1
+        self.cChannels = cChannels
         self.height = 1
         self.width = cInputs * cOutputs
 
