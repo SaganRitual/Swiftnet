@@ -36,10 +36,10 @@ class Gremlin {
 
     var inputLayer = SwiftnetLayer(
         activation: .identity, poolingFunction: .max,
-        kernelWidth: 3, height: 3, cChannels: 1
+        kernelWidth: 3, height: 3, cChannels: 2
     )
 
-    var hiddenLayers = [SwiftnetLayer(activation: .identity, cInputs: 9, cOutputs: 9, cChannels: 1)]
+    var hiddenLayers = [SwiftnetLayer(activation: .identity, cInputs: 18, cOutputs: 9, cChannels: 1)]
 
     var outputLayer = SwiftnetLayer(
         activation: .identity, cInputs: 9, cOutputs: 9, cChannels: 1, calculateControls: !lastLayerIsEmpty

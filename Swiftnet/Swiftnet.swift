@@ -72,17 +72,14 @@ class Swiftnet {
     static func getStackCounts(_ layers: [SwiftnetLayer]) -> SwiftnetLayer.Counts {
         let totals = SwiftnetLayer.Counts()
 
-        layers.forEach { layer in
-            if layer === layers.first {
-                totals.cInputs = layer.counts.cInputs * layer.cChannels
-            }
+        let topLayer = getLayerCounts(layers.first!, isTopLayer: true)
+        totals.combine(topLayer, cChannels: layers.first!.cChannels)
 
-            totals.cOutputs += layer.counts.cOutputs
+        layers.dropFirst().forEach { layer in
+            let yn = !lastLayerIsEmpty || layer !== layers.last
+            let c = getLayerCounts(layer, includeControls: yn)
 
-            if !lastLayerIsEmpty || layer !== layers.last {
-                totals.cBiases += layer.counts.cBiases
-                totals.cWeights += layer.counts.cWeights
-            }
+            totals.combine(c, cChannels: layer.cChannels)
         }
 
         if !stackCountsShown {
@@ -92,10 +89,30 @@ class Swiftnet {
                     + " x \(layers.first!.cChannels)"
             )
 
-            print(totals.debugDescription)
+            print(totals)
             stackCountsShown = true
         }
 
         return totals
+    }
+
+    static func getLayerCounts(
+        _ layer: SwiftnetLayer, isTopLayer: Bool = false,
+        includeControls: Bool = true
+    ) -> SwiftnetLayer.Counts {
+        let counts = SwiftnetLayer.Counts()
+
+        if isTopLayer {
+            counts.cInputs = layer.counts.cInputs
+        }
+
+        counts.cOutputs += layer.counts.cOutputs
+
+        if includeControls {
+            counts.cBiases += layer.counts.cBiases
+            counts.cWeights += layer.counts.cWeights
+        }
+
+        return counts
     }
 }

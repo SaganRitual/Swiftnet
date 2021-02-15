@@ -27,6 +27,13 @@ class SwiftnetLayer {
         var cBiases = 0, cInputs = 0, cOutputs = 0, cWeights = 0
 
         var totalElements: Int { cBiases + cInputs + cOutputs + cWeights }
+
+        func combine(_ other: Counts, cChannels: Int) {
+            cBiases += other.cBiases * cChannels
+            cInputs += other.cInputs * cChannels
+            cOutputs += other.cOutputs * cChannels
+            cWeights += other.cWeights * cChannels
+        }
     }
 
     var counts = Counts()
